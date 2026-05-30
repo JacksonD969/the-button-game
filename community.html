@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Button - Community</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050510;
+            --card: #0f0f25;
+            --neon: #ffaa00;
+            --neon2: #ff00ff;
+            --text: #e0e0e0;
+            --input-bg: #1a1a35;
+            --border: #333;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container { width: 100%; max-width: 900px; margin: auto; }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(6px);
+        }
+        .modal {
+            background: var(--card);
+            border: 2px solid var(--neon);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 40px rgba(255,170,0,0.3);
+            text-align: center;
+        }
+        .modal h2 { color: var(--neon); margin-bottom: 15px; font-family: 'Orbitron', sans-serif; }
+        .modal p { margin: 10px 0; font-size: 0.95rem; line-height: 1.7; }
+        .modal input, .modal textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 30px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .modal textarea { border-radius: 16px; resize: vertical; text-align: left; }
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 30px;
+            border: 2px solid var(--neon);
+            background: transparent;
+            color: var(--neon);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 25px var(--neon); }
+        .btn.small { padding: 6px 16px; font-size: 0.8rem; }
+        .btn.upload { border-color: var(--neon2); color: var(--neon2); }
+        .btn.upload:hover { background: var(--neon2); color: #000; box-shadow: 0 0 25px var(--neon2); }
+        .btn.close-btn { background: transparent; border: 1px solid #555; color: #aaa; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-family: 'Open Sans', sans-serif; }
+        .btn.close-btn:hover { background: #333; color: white; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        header h1 { color: var(--neon); text-shadow: 0 0 15px var(--neon); font-family: 'Orbitron', sans-serif; letter-spacing: 3px; }
+        .user-area { display: flex; align-items: center; gap: 10px; }
+        .user-badge { background: #1e1e45; padding: 6px 16px; border-radius: 20px; border: 1px solid var(--neon); }
+        .stats-badge { background: #2a2a45; padding: 4px 14px; border-radius: 20px; border: 1px solid #555; color: #ccc; }
+
+        .stories-grid { display: flex; flex-direction: column; gap: 20px; }
+        .story-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #333;
+            transition: 0.3s;
+        }
+        .story-card:hover { border-color: var(--neon); box-shadow: 0 0 15px rgba(255,170,0,0.1); }
+        .story-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .story-title { font-size: 1.3rem; font-weight: 700; color: var(--neon); font-family: 'Orbitron', sans-serif; }
+        .story-author { font-size: 0.8rem; color: #aaa; }
+        .story-meta { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 12px; font-size: 0.85rem; color: #ccc; }
+        .story-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .emoji-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 4px 8px;
+            border-radius: 20px;
+            position: relative;
+        }
+        .emoji-btn.active { background: #2a2a50; box-shadow: 0 0 8px var(--neon); }
+        .emoji-count { font-size: 0.8rem; margin-left: 2px; color: #aaa; }
+        .download-btn { background: #1e1e45; border: 1px solid #555; color: white; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-family: 'Orbitron', sans-serif; text-transform: uppercase; }
+        .download-btn:hover { background: #2a2a60; }
+
+        .comments-section {
+            margin-top: 15px;
+            border-top: 1px solid #333;
+            padding-top: 12px;
+            position: relative;
+        }
+        .comments-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .comment { background: #1a1a30; padding: 8px 12px; border-radius: 8px; margin: 6px 0; font-size: 0.9rem; }
+        .comment strong { color: var(--neon2); }
+        .comment-input { display: flex; gap: 8px; margin-top: 10px; }
+        .comment-input input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 20px;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        @media (max-width: 600px) {
+            header { flex-direction: column; text-align: center; }
+            .story-actions { justify-content: center; }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Welcome Overlay -->
+    <div class="overlay" id="welcomeOverlay">
+        <div class="modal">
+            <h2>🌐 Welcome to The Button Community</h2>
+            <p>
+                Share your interactive stories with the world, and download stories from others.<br>
+                <strong>Rules:</strong> No offensive content, respect everyone, and don't impersonate others.<br>
+                Enjoy and be creative! ✨
+            </p>
+            <input type="text" id="usernameInput" placeholder="Enter your display name..." maxlength="20">
+            <button class="btn" id="enterBtn">🚀 Enter Community</button>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="overlay hidden" id="uploadModal">
+        <div class="modal">
+            <h2>📤 Upload New Story</h2>
+            <input type="text" id="modalStoryName" placeholder="Story name...">
+            <input type="file" id="modalJsonFile" accept=".json" style="display:none;">
+            <button class="btn upload" onclick="document.getElementById('modalJsonFile').click()">📁 Choose JSON File</button>
+            <span id="fileNameDisplay" style="display:block; margin:5px 0; color:#aaa;"></span>
+            <textarea id="modalDescription" placeholder="Add a comment or description (optional)..." rows="3"></textarea>
+            <button class="btn" id="submitUploadBtn">🚀 Publish Story</button>
+            <button class="btn" id="closeUploadModal" style="margin-top:10px;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container" id="mainContent" style="display:none;">
+        <header>
+            <h1>🌐 THE BUTTON <span class="stats-badge" id="storiesCount">0 stories</span></h1>
+            <div class="user-area">
+                <span class="user-badge" id="displayUsername"></span>
+                <button class="btn small" id="changeNameBtn">Change Name</button>
+                <button class="btn upload" id="openUploadBtn">📤 Upload Story</button>
+                <button class="btn" onclick="location.href='index.html'">🏠 Home</button>
+            </div>
+        </header>
+        <div class="stories-grid" id="storiesGrid"></div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let currentUsername = localStorage.getItem('community_username') || '';
+        let stories = [];
+        let userReactions = {};
+
+        // ---------- API Helpers ----------
+        async function fetchStories() { 
+            const res = await fetch(`${API_URL}/api/stories`); 
+            if (!res.ok) throw new Error('Failed to fetch');
+            return res.json(); 
+        }
+        async function uploadStory(name, author, data) {
+            const res = await fetch(`${API_URL}/api/stories`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, author, data })
+            });
+            return res.json();
+        }
+        async function addCommentApi(storyId, user, text) {
+            const res = await fetch(`${API_URL}/api/stories/${storyId}/comments`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user, text })
+            });
+            return res.json();
+        }
+        async function toggleReactionApi(storyId, username, type) {
+            const res = await fetch(`${API_URL}/api/stories/${storyId}/reactions`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, type })
+            });
+            return res.json();
+        }
+
+        // ---------- UI Functions ----------
+        function renderStories() {
+            document.getElementById('storiesCount').textContent = stories.length + ' stories';
+            if (stories.length === 0) {
+                document.getElementById('storiesGrid').innerHTML = '<p style="text-align:center; color:#aaa;">No stories yet. Be the first to share!</p>';
+                return;
+            }
+            stories.sort((a,b) => b.id - a.id);
+            document.getElementById('storiesGrid').innerHTML = stories.map(story => {
+                const r = story.reactions;
+                return `
+                <div class="story-card">
+                    <div class="story-header">
+                        <span class="story-title">${story.name}</span>
+                        <span class="story-author">${story.author} • ${new Date(story.uploadedAt).toLocaleString('en-US')}</span>
+                    </div>
+                    <div class="story-meta">
+                        <span>📊 ${story.data.levels.length} levels</span>
+                        <span>💬 ${story.comments.length} comments</span>
+                    </div>
+                    <div class="story-actions">
+                        <button class="emoji-btn ${hasReacted(story.id, 'like') ? 'active' : ''}" onclick="handleReaction(${story.id}, 'like')">👍 <span class="emoji-count">${r.like}</span></button>
+                        <button class="emoji-btn ${hasReacted(story.id, 'love') ? 'active' : ''}" onclick="handleReaction(${story.id}, 'love')">❤️ <span class="emoji-count">${r.love}</span></button>
+                        <button class="emoji-btn ${hasReacted(story.id, 'wow') ? 'active' : ''}" onclick="handleReaction(${story.id}, 'wow')">😮 <span class="emoji-count">${r.wow}</span></button>
+                        <button class="emoji-btn ${hasReacted(story.id, 'sad') ? 'active' : ''}" onclick="handleReaction(${story.id}, 'sad')">😢 <span class="emoji-count">${r.sad}</span></button>
+                        <button class="emoji-btn ${hasReacted(story.id, 'clap') ? 'active' : ''}" onclick="handleReaction(${story.id}, 'clap')">👏 <span class="emoji-count">${r.clap}</span></button>
+                        <button class="download-btn" onclick="downloadStory(${story.id})">📥 Download</button>
+                        <button class="btn small" onclick="toggleComments(${story.id})">💬 Comments</button>
+                    </div>
+                    <div class="comments-section" id="comments-${story.id}" style="display:none;">
+                        <div class="comments-header">
+                            <span style="color:var(--neon); font-weight:600;">Comments</span>
+                            <button class="btn close-btn" onclick="closeComments(${story.id})">✕ Close</button>
+                        </div>
+                        ${story.comments.map(c => `<div class="comment"><strong>${c.user}:</strong> ${c.text} <span style="font-size:0.7rem;color:#777;">${new Date(c.time).toLocaleString('en-US')}</span></div>`).join('')}
+                        <div class="comment-input">
+                            <input type="text" id="commentInput-${story.id}" placeholder="Write a comment...">
+                            <button class="btn small" onclick="submitComment(${story.id})">Send</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function hasReacted(storyId, type) {
+            if (!userReactions[currentUsername]) return false;
+            return userReactions[currentUsername][storyId] && userReactions[currentUsername][storyId][type];
+        }
+
+        async function handleReaction(storyId, type) {
+            if (!currentUsername) return;
+            try {
+                const result = await toggleReactionApi(storyId, currentUsername, type);
+                const index = stories.findIndex(s => s.id === storyId);
+                if (index !== -1) stories[index] = result.story;
+                if (!userReactions[currentUsername]) userReactions[currentUsername] = {};
+                if (!userReactions[currentUsername][storyId]) userReactions[currentUsername][storyId] = {};
+                userReactions[currentUsername][storyId][type] = result.userReaction;
+                renderStories();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function submitComment(storyId) {
+            const input = document.getElementById('commentInput-' + storyId);
+            if (!input || !input.value.trim()) return;
+            try {
+                const updatedStory = await addCommentApi(storyId, currentUsername, input.value.trim());
+                const index = stories.findIndex(s => s.id === storyId);
+                if (index !== -1) stories[index] = updatedStory;
+                renderStories();
+                document.getElementById('comments-' + storyId).style.display = 'block';
+            } catch (err) { console.error(err); }
+        }
+
+        function toggleComments(storyId) {
+            const el = document.getElementById('comments-' + storyId);
+            if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+        window.closeComments = function(storyId) {
+            const el = document.getElementById('comments-' + storyId);
+            if (el) el.style.display = 'none';
+        };
+
+        function downloadStory(storyId) {
+            const story = stories.find(s => s.id === storyId);
+            if (story) {
+                const cleanName = story.name.replace(/\.json$/i, '').replace(/\s+/g, '_');
+                const blob = new Blob([JSON.stringify(story.data, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = cleanName + '.json';
+                a.click();
+            }
+        }
+
+        // ---------- Session ----------
+        function showMain() {
+            document.getElementById('welcomeOverlay').classList.add('hidden');
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('displayUsername').textContent = currentUsername;
+            loadAndRender();
+        }
+        async function loadAndRender() {
+            try {
+                stories = await fetchStories();
+                renderStories();
+            } catch (err) {
+                document.getElementById('storiesGrid').innerHTML = '<p style="color:red;">Unable to load stories. Is the server running?</p>';
+            }
+        }
+
+        if (currentUsername) showMain();
+
+        document.getElementById('enterBtn').addEventListener('click', () => {
+            const name = document.getElementById('usernameInput').value.trim();
+            if (!name) return alert('Please enter a name.');
+            currentUsername = name;
+            localStorage.setItem('community_username', name);
+            showMain();
+        });
+        document.getElementById('changeNameBtn').addEventListener('click', () => {
+            const newName = prompt('Enter new name:', currentUsername);
+            if (newName && newName.trim()) {
+                currentUsername = newName.trim();
+                localStorage.setItem('community_username', currentUsername);
+                document.getElementById('displayUsername').textContent = currentUsername;
+            }
+        });
+
+        // Upload
+        document.getElementById('openUploadBtn').addEventListener('click', () => document.getElementById('uploadModal').classList.remove('hidden'));
+        document.getElementById('closeUploadModal').addEventListener('click', () => document.getElementById('uploadModal').classList.add('hidden'));
+        document.getElementById('modalJsonFile').addEventListener('change', e => {
+            document.getElementById('fileNameDisplay').textContent = e.target.files[0] ? '📄 ' + e.target.files[0].name : '';
+        });
+        document.getElementById('submitUploadBtn').addEventListener('click', async () => {
+            const name = document.getElementById('modalStoryName').value.trim();
+            const file = document.getElementById('modalJsonFile').files[0];
+            const desc = document.getElementById('modalDescription').value.trim();
+            if (!name || !file) return alert('Please enter a name and select a file.');
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    if (!jsonData.levels) return alert('Invalid JSON structure.');
+                    const newStory = await uploadStory(name, currentUsername, jsonData);
+                    if (desc) await addCommentApi(newStory.id, currentUsername, desc);
+                    document.getElementById('uploadModal').classList.add('hidden');
+                    await loadAndRender();
+                    alert('Story published successfully!');
+                } catch { alert('Invalid JSON file.'); }
+            };
+            reader.readAsText(file);
+        });
+
+        // Global functions
+        window.handleReaction = handleReaction;
+        window.submitComment = submitComment;
+        window.toggleComments = toggleComments;
+        window.downloadStory = downloadStory;
+    </script>
+</body>
+</html>
