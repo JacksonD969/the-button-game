@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Button - Scenario Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a15;
+            --card: #13132b;
+            --neon: #00f0ff;
+            --neon2: #ff00ff;
+            --text: #e0e0e0;
+            --danger: #ff1744;
+            --success: #00ff41;
+            --warning: #ffaa00;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .main-container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: white;
+            text-align: center;
+            text-shadow: 0 0 20px var(--neon);
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid var(--neon);
+            background: rgba(20,20,40,0.8);
+            color: var(--neon);
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            text-transform: uppercase;
+        }
+        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 30px var(--neon); }
+        .btn.danger { border-color: var(--danger); color: var(--danger); }
+        .btn.danger:hover { background: var(--danger); box-shadow: 0 0 30px var(--danger); }
+        .btn.success { border-color: var(--success); color: var(--success); }
+        .btn.success:hover { background: var(--success); box-shadow: 0 0 30px var(--success); }
+        .btn.warning { border-color: var(--warning); color: var(--warning); }
+        .btn.warning:hover { background: var(--warning); box-shadow: 0 0 30px var(--warning); }
+        .btn.purple { border-color: var(--neon2); color: var(--neon2); }
+        .btn.purple:hover { background: var(--neon2); color: #000; box-shadow: 0 0 30px var(--neon2); }
+
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 50px;
+        }
+        .start-screen h2 { color: white; font-family: 'Orbitron', sans-serif; }
+        .scenario-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .scenario-item {
+            background: var(--card);
+            border: 1px solid var(--neon);
+            padding: 12px 18px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .scenario-item:hover { background: #1e1e45; }
+
+        .editor-layout {
+            display: none;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+        }
+        .sidebar {
+            background: var(--card);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid var(--neon2);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .sidebar h3 { color: var(--neon2); text-align: center; font-family: 'Orbitron', sans-serif; }
+        .level-item {
+            background: #1a1a35;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .level-item:hover, .level-item.active { border-color: var(--neon); background: #252550; }
+        .level-item .delete-btn { color: var(--danger); cursor: pointer; margin-left: 5px; }
+
+        .editor-main {
+            background: var(--card);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid var(--neon);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .editor-main h3 { color: var(--neon); font-family: 'Orbitron', sans-serif; }
+        .field-group { display: flex; flex-direction: column; gap: 5px; }
+        .field-group label { font-weight: 600; color: #aaa; }
+        input, textarea, select {
+            font-family: 'Open Sans', sans-serif;
+            background: #0d0d20;
+            border: 1px solid #444;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        textarea { min-height: 80px; resize: vertical; }
+        .choices-editor { display: flex; flex-direction: column; gap: 10px; }
+        .choice-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: #1a1a35;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        .choice-row input { flex: 1; }
+        .ending-toggle { display: flex; align-items: center; gap: 10px; }
+        @media (max-width: 768px) {
+            .editor-layout { grid-template-columns: 1fr; }
+            .sidebar { max-height: 200px; flex-direction: row; flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>✍️ The Button Editor</h1>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="start-screen">
+            <h2>What would you like to do?</h2>
+            <button class="btn success" id="newScenarioBtn">🌟 Create New Scenario</button>
+            <button class="btn warning" id="loadExistingBtn">📂 Load Saved Scenario</button>
+            <button class="btn purple" id="importJsonBtn">📥 Import JSON File to Edit</button>
+            <input type="file" id="importFileInput" accept=".json" style="display:none">
+            <div id="savedList" class="scenario-list" style="display:none;"></div>
+            <button class="btn" onclick="location.href='index.html'">↩️ Back to Menu</button>
+        </div>
+
+        <!-- Editor Screen -->
+        <div id="editorScreen" class="editor-layout">
+            <div class="sidebar">
+                <h3>📜 Levels</h3>
+                <div id="levelList"></div>
+                <button class="btn" id="addLevelBtn">➕ New Level</button>
+                <hr style="border-color:#333;">
+                <button class="btn success" id="saveBtn">💾 Save Scenario</button>
+                <button class="btn warning" id="exportBtn">📤 Export as JSON</button>
+                <button class="btn danger" id="backToStartBtn">↩️ Back to Start</button>
+            </div>
+            <div class="editor-main" id="editorMain">
+                <!-- dynamically filled -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- Multi-Scenario Management ----------
+        const STORAGE_KEY = 'neon_scenarios';
+
+        function getAllScenarios() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+        }
+
+        function saveScenarioToStorage(name, data) {
+            const scenarios = getAllScenarios();
+            const existing = scenarios.find(s => s.name === name);
+            if (existing) {
+                existing.data = data;
+            } else {
+                scenarios.push({ name, data });
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(scenarios));
+        }
+
+        function deleteScenario(name) {
+            let scenarios = getAllScenarios();
+            scenarios = scenarios.filter(s => s.name !== name);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(scenarios));
+        }
+
+        // ---------- Editor State ----------
+        let currentLevels = {};
+        let currentScenarioName = '';
+
+        const startScreen = document.getElementById('startScreen');
+        const editorScreen = document.getElementById('editorScreen');
+        const savedList = document.getElementById('savedList');
+        const levelList = document.getElementById('levelList');
+        const editorMain = document.getElementById('editorMain');
+
+        // All 14 moods
+        const ALL_MOODS = ['mysterious','intense','calm','energetic','dark','bright','ethereal','hopeful','danger','haunting','nostalgic','chaotic','serene','glitched'];
+
+        function resetEditor() {
+            currentLevels = {};
+            currentScenarioName = '';
+            renderLevelList();
+            editorMain.innerHTML = '';
+        }
+
+        function switchToEditor() {
+            startScreen.style.display = 'none';
+            editorScreen.style.display = 'grid';
+        }
+
+        function switchToStart() {
+            startScreen.style.display = 'flex';
+            editorScreen.style.display = 'none';
+            resetEditor();
+        }
+
+        function showSavedList() {
+            const scenarios = getAllScenarios();
+            if (scenarios.length === 0) {
+                savedList.innerHTML = '<p style="color:#aaa;">No saved scenarios found.</p>';
+                savedList.style.display = 'block';
+                return;
+            }
+            savedList.innerHTML = scenarios.map(s => `
+                <div class="scenario-item">
+                    <span>${s.name}</span>
+                    <div>
+                        <button class="btn" onclick="loadScenario('${s.name}')">Load</button>
+                        <button class="btn danger" onclick="deleteScenario('${s.name}'); showSavedList();">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+            savedList.style.display = 'flex';
+        }
+
+        function loadScenario(name) {
+            const scenarios = getAllScenarios();
+            const found = scenarios.find(s => s.name === name);
+            if (found) {
+                currentLevels = {};
+                found.data.levels.forEach(l => currentLevels[l.id] = l);
+                currentScenarioName = name;
+                switchToEditor();
+                renderLevelList();
+                if (Object.keys(currentLevels).length > 0) {
+                    selectLevel(Object.keys(currentLevels)[0]);
+                }
+            }
+        }
+
+        function createNewScenario() {
+            const name = prompt('Enter a name for the new scenario:');
+            if (!name) return;
+            currentScenarioName = name;
+            currentLevels = {};
+            const firstId = 'level_1';
+            currentLevels[firstId] = {
+                id: firstId,
+                levelName: 'The Beginning',
+                scenario: '',
+                mood: 'mysterious',
+                hint: '',
+                choices: [],
+                isEnding: false,
+                endingDescription: ''
+            };
+            switchToEditor();
+            renderLevelList();
+            selectLevel(firstId);
+        }
+
+        // ---------- Import JSON File ----------
+        function importJsonFile() {
+            document.getElementById('importFileInput').click();
+        }
+
+        document.getElementById('importFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (!data.levels) { alert('Invalid JSON: missing "levels" array.'); return; }
+                    const name = prompt('Enter a name for this imported scenario:', 'Imported Scenario');
+                    if (!name) return;
+                    currentLevels = {};
+                    data.levels.forEach(l => currentLevels[l.id] = l);
+                    currentScenarioName = name;
+                    switchToEditor();
+                    renderLevelList();
+                    if (Object.keys(currentLevels).length > 0) selectLevel(Object.keys(currentLevels)[0]);
+                } catch (err) {
+                    alert('Invalid JSON file.');
+                }
+            };
+            reader.readAsText(file);
+            this.value = '';
+        });
+
+        // ---------- Render Level List ----------
+        function renderLevelList() {
+            levelList.innerHTML = Object.values(currentLevels).map(l => `
+                <div class="level-item ${l.id === selectedLevelId ? 'active' : ''}" onclick="selectLevel('${l.id}')">
+                    <span>${l.levelName || l.id}</span>
+                    <span class="delete-btn" onclick="event.stopPropagation(); deleteLevel('${l.id}')">🗑️</span>
+                </div>
+            `).join('');
+        }
+
+        let selectedLevelId = null;
+
+        function selectLevel(id) {
+            selectedLevelId = id;
+            renderLevelList();
+            renderLevelEditor(id);
+        }
+
+        function deleteLevel(id) {
+            if (!confirm('Are you sure you want to delete this level?')) return;
+            delete currentLevels[id];
+            Object.values(currentLevels).forEach(l => {
+                l.choices = l.choices.filter(c => c.nextLevelId !== id);
+            });
+            if (selectedLevelId === id) {
+                const remaining = Object.keys(currentLevels);
+                selectedLevelId = remaining.length > 0 ? remaining[0] : null;
+            }
+            renderLevelList();
+            if (selectedLevelId) selectLevel(selectedLevelId);
+            else editorMain.innerHTML = '';
+        }
+
+        function renderLevelEditor(id) {
+            const level = currentLevels[id];
+            if (!level) return;
+
+            let html = `
+                <h3>Editing: ${id}</h3>
+                <div class="field-group">
+                    <label>Level Name</label>
+                    <input value="${level.levelName || ''}" onchange="updateLevel('${id}', 'levelName', this.value)">
+                </div>
+                <div class="field-group">
+                    <label>Scenario Text</label>
+                    <textarea onchange="updateLevel('${id}', 'scenario', this.value)">${level.scenario || ''}</textarea>
+                </div>
+                <div class="field-group">
+                    <label>Mood</label>
+                    <select onchange="updateLevel('${id}', 'mood', this.value)">
+                        ${ALL_MOODS.map(m => `<option value="${m}" ${level.mood===m?'selected':''}>${m}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Hint</label>
+                    <input value="${level.hint || ''}" onchange="updateLevel('${id}', 'hint', this.value)">
+                </div>
+                <div class="ending-toggle">
+                    <label>Is this an ending?</label>
+                    <input type="checkbox" ${level.isEnding?'checked':''} onchange="toggleEnding('${id}', this.checked)">
+                </div>
+                ${level.isEnding ? `
+                <div class="field-group">
+                    <label>Ending Description</label>
+                    <textarea onchange="updateLevel('${id}', 'endingDescription', this.value)">${level.endingDescription || ''}</textarea>
+                </div>` : ''}
+                ${!level.isEnding ? `
+                <div class="field-group">
+                    <label>Choices</label>
+                    <div class="choices-editor" id="choicesEditor">
+                        ${(level.choices || []).map((ch, i) => `
+                            <div class="choice-row">
+                                <input placeholder="Choice text" value="${ch.text || ''}" onchange="updateChoice('${id}', ${i}, 'text', this.value)">
+                                <input placeholder="Next Level ID" value="${ch.nextLevelId || ''}" onchange="updateChoice('${id}', ${i}, 'nextLevelId', this.value)">
+                                <button class="btn danger" onclick="removeChoice('${id}', ${i})">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn" onclick="addChoice('${id}')">➕ Add Choice</button>
+                </div>` : ''}
+            `;
+            editorMain.innerHTML = html;
+        }
+
+        function updateLevel(id, key, value) {
+            if (currentLevels[id]) {
+                currentLevels[id][key] = value;
+                if (key === 'levelName') renderLevelList();
+            }
+        }
+
+        function toggleEnding(id, checked) {
+            currentLevels[id].isEnding = checked;
+            if (checked) currentLevels[id].choices = [];
+            renderLevelEditor(id);
+        }
+
+        function addChoice(levelId) {
+            currentLevels[levelId].choices.push({ text: '', nextLevelId: '' });
+            renderLevelEditor(levelId);
+        }
+
+        function removeChoice(levelId, index) {
+            currentLevels[levelId].choices.splice(index, 1);
+            renderLevelEditor(levelId);
+        }
+
+        function updateChoice(levelId, index, key, value) {
+            if (currentLevels[levelId]?.choices[index]) currentLevels[levelId].choices[index][key] = value;
+        }
+
+        function addNewLevel() {
+            const id = prompt('Enter a level ID (e.g., level_2):');
+            if (!id) return;
+            if (currentLevels[id]) { alert('This ID already exists!'); return; }
+            currentLevels[id] = { id, levelName: '', scenario: '', mood: 'mysterious', hint: '', choices: [], isEnding: false, endingDescription: '' };
+            renderLevelList();
+            selectLevel(id);
+        }
+
+        function saveCurrent() {
+            if (!currentScenarioName) { alert('No scenario is open.'); return; }
+            const data = { levels: Object.values(currentLevels) };
+            saveScenarioToStorage(currentScenarioName, data);
+            alert(`"${currentScenarioName}" saved successfully!`);
+        }
+
+        function exportJSON() {
+            const data = { levels: Object.values(currentLevels) };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (currentScenarioName || 'scenario') + '.json';
+            a.click();
+        }
+
+        // ---------- Event Listeners ----------
+        document.getElementById('newScenarioBtn').addEventListener('click', createNewScenario);
+        document.getElementById('loadExistingBtn').addEventListener('click', showSavedList);
+        document.getElementById('importJsonBtn').addEventListener('click', importJsonFile);
+        document.getElementById('addLevelBtn').addEventListener('click', addNewLevel);
+        document.getElementById('saveBtn').addEventListener('click', saveCurrent);
+        document.getElementById('exportBtn').addEventListener('click', exportJSON);
+        document.getElementById('backToStartBtn').addEventListener('click', switchToStart);
+    </script>
+</body>
+</html>

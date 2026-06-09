@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>The Button - Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-start: #ffffff;
+            --btn-start: #e63946;
+            --neon-cyan: #00f0ff;
+            --neon-magenta: #ff00ff;
+            --neon-yellow: #ffe600;
+            --neon-green: #00ff41;
+            --neon-orange: #ff6a00;
+            --neon-pink: #ff1493;
+            --neon-purple: #b347ea;
+            --neon-red: #ff1744;
+            --card-bg: rgba(20, 20, 40, 0.85);
+            --transition-speed: 0.8s;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background: var(--bg-start);
+            transition: background 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            cursor: none;
+            position: relative;
+            padding: 20px 10px;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--glow-color, #00f0ff);
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background 0.2s, border-color 0.2s;
+            mix-blend-mode: difference;
+            box-shadow: 0 0 10px var(--glow-color, #00f0ff);
+        }
+        .custom-cursor.hover {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-width: 3px;
+            box-shadow: 0 0 20px var(--glow-color, #00f0ff), 0 0 40px var(--glow-color, #00f0ff);
+        }
+
+        #particlesCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+        #particlesCanvas.active { opacity: 1; }
+
+        .main-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            padding: 10px 15px 30px;
+            flex: 1 0 auto;
+            min-height: 100vh;
+        }
+
+        .scenario-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .scenario-selector h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: white;
+            text-align: center;
+            font-size: 1.8rem;
+            text-shadow: 0 0 20px #00f0ff;
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+        .select-btn {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 16px;
+            border-radius: 50px;
+            border: 2px solid #00f0ff;
+            background: rgba(20, 20, 40, 0.8);
+            color: #00f0ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            text-transform: uppercase;
+        }
+        .select-btn:hover {
+            background: #00f0ff;
+            color: #000;
+            box-shadow: 0 0 30px #00f0ff;
+            transform: scale(1.03);
+        }
+        .select-btn.local { border-color: #ff00ff; color: #ff00ff; }
+        .select-btn.local:hover { background: #ff00ff; color: #000; box-shadow: 0 0 30px #ff00ff; }
+        .select-btn.import { border-color: #ffaa00; color: #ffaa00; }
+        .select-btn.import:hover { background: #ffaa00; color: #000; box-shadow: 0 0 30px #ffaa00; }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 30;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #fff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        .back-btn:hover { background: white; color: black; }
+
+        .circle-btn {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: none;
+            background: var(--btn-start);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 40px rgba(230, 57, 70, 0.5), 0 0 0 0 rgba(230, 57, 70, 0.7), inset 0 -8px 20px rgba(0, 0, 0, 0.3), inset 0 8px 20px rgba(255, 255, 255, 0.2);
+            animation: pulse-red 2.5s ease-in-out infinite;
+            outline: none;
+            z-index: 20;
+            flex-shrink: 0;
+        }
+        .circle-btn::after {
+            content: '';
+            position: absolute;
+            top: -15px; left: -15px; right: -15px; bottom: -15px;
+            border-radius: 50%;
+            border: 3px solid rgba(230, 57, 70, 0.25);
+            animation: ripple-red 2.5s ease-in-out infinite;
+        }
+        .circle-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 15px 50px rgba(230, 57, 70, 0.7), 0 0 30px rgba(230, 57, 70, 0.4), inset 0 -8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .circle-btn:active { transform: scale(0.94); transition: transform 0.15s ease; }
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 10px 40px rgba(230, 57, 70, 0.5), 0 0 0 0 rgba(230, 57, 70, 0.7), inset 0 -8px 20px rgba(0, 0, 0, 0.3), inset 0 8px 20px rgba(255, 255, 255, 0.2); }
+            50% { box-shadow: 0 10px 55px rgba(230, 57, 70, 0.75), 0 0 0 30px rgba(230, 57, 70, 0), inset 0 -8px 20px rgba(0, 0, 0, 0.3), inset 0 8px 20px rgba(255, 255, 255, 0.25); }
+        }
+        @keyframes ripple-red {
+            0%, 100% { transform: scale(1); opacity: 0.25; }
+            50% { transform: scale(1.18); opacity: 0.05; }
+        }
+
+        .circle-btn.activated {
+            width: 75px;
+            height: 75px;
+            animation: none;
+            box-shadow: 0 0 40px var(--glow-color, #00f0ff), 0 0 80px var(--glow-color, #00f0ff), 0 0 120px var(--glow-color-2, #ff00ff);
+            background: var(--btn-neon-bg, #111);
+            border: 3px solid var(--glow-color, #00f0ff);
+            cursor: pointer;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .circle-btn.activated::after {
+            border-color: var(--glow-color, #00f0ff);
+            animation: ripple-neon 1.8s ease-in-out infinite;
+        }
+        .circle-btn.activated:hover {
+            transform: scale(1.12);
+            box-shadow: 0 0 60px var(--glow-color, #00f0ff), 0 0 100px var(--glow-color, #00f0ff), 0 0 160px var(--glow-color-2, #ff00ff);
+        }
+        @keyframes ripple-neon {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.35); opacity: 0; }
+        }
+
+        /* تأثيرات الحركة للدائرة */
+        @keyframes portalSpin {
+            0% { transform: scale(1) rotate(0deg); box-shadow: 0 0 40px var(--glow-color), 0 0 80px var(--glow-color), 0 0 120px var(--glow-color-2); }
+            25% { transform: scale(1.8) rotate(90deg); box-shadow: 0 0 100px var(--glow-color), 0 0 200px var(--glow-color), 0 0 300px var(--glow-color-2); }
+            50% { transform: scale(2.5) rotate(180deg); box-shadow: 0 0 150px var(--glow-color), 0 0 300px var(--glow-color), 0 0 450px var(--glow-color-2); opacity: 0.9; }
+            75% { transform: scale(1.5) rotate(270deg); box-shadow: 0 0 60px var(--glow-color), 0 0 120px var(--glow-color), 0 0 180px var(--glow-color-2); }
+            100% { transform: scale(1) rotate(360deg); box-shadow: 0 0 40px var(--glow-color), 0 0 80px var(--glow-color), 0 0 120px var(--glow-color-2); }
+        }
+        @keyframes portalPulse {
+            0%, 100% { box-shadow: 0 0 40px var(--glow-color), 0 0 80px var(--glow-color), 0 0 120px var(--glow-color-2); }
+            50% { box-shadow: 0 0 80px var(--glow-color), 0 0 160px var(--glow-color), 0 0 240px var(--glow-color-2); }
+        }
+        @keyframes portalRing {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 0.4; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+        .circle-btn.portal-animation {
+            animation: portalSpin 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards, portalPulse 0.6s ease-in-out 2;
+        }
+        .circle-btn.portal-animation::after {
+            content: '';
+            position: absolute;
+            top: -25px; left: -25px; right: -25px; bottom: -25px;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top-color: var(--glow-color);
+            border-bottom-color: var(--glow-color-2);
+            animation: portalRing 1.2s linear forwards;
+            opacity: 0.8;
+        }
+
+        .scenario-card {
+            background: var(--card-bg);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px 22px;
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+            border-color: var(--card-border, rgba(255, 255, 255, 0.1));
+        }
+        .scenario-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .scenario-card .level-indicator { font-size: 0.8rem; color: var(--glow-color, #00f0ff); letter-spacing: 3px; margin-bottom: 8px; font-weight: 700; font-family: 'Orbitron', sans-serif; }
+        .scenario-card .scenario-text { font-size: 1.2rem; font-weight: 600; color: #f0f0f0; line-height: 1.8; margin-bottom: 20px; text-shadow: 0 0 20px rgba(255, 255, 255, 0.3); word-wrap: break-word; }
+        .scenario-card .mood-emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; animation: float-emoji 3s ease-in-out infinite; }
+        @keyframes float-emoji { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        .choices-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 550px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
+            pointer-events: none;
+            flex-shrink: 0;
+            padding-bottom: 5px;
+        }
+        .choices-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .choice-btn {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 14px 18px;
+            border-radius: 50px;
+            border: 2px solid var(--choice-border, rgba(255, 255, 255, 0.3));
+            background: var(--choice-bg, rgba(30, 30, 50, 0.7));
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.5;
+            flex-shrink: 0;
+        }
+        .choice-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+            transition: left 0.6s ease;
+        }
+        .choice-btn:hover {
+            border-color: var(--glow-color, #00f0ff);
+            box-shadow: 0 0 30px var(--glow-color, #00f0ff), 0 0 60px rgba(0, 0, 0, 0.3);
+            transform: translateY(-3px) scale(1.03);
+            background: var(--choice-hover-bg, rgba(40, 40, 70, 0.85));
+            letter-spacing: 1px;
+        }
+        .choice-btn:hover::before { left: 100%; }
+        .choice-btn:active { transform: scale(0.96); transition: transform 0.1s ease; box-shadow: 0 0 50px var(--glow-color, #00f0ff); }
+
+        .hint-text { color: #999; font-size: 0.85rem; text-align: center; opacity: 0; transition: opacity 0.6s ease; margin-top: 5px; }
+        .hint-text.visible { opacity: 0.7; }
+
+        .flash-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        .flash-overlay.active { opacity: 0.7; transition: opacity 0s; }
+
+        .ending-screen {
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            z-index: 15;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+        .ending-screen.visible { opacity: 1; transform: scale(1); pointer-events: auto; }
+        .ending-screen h2 { font-size: 2rem; color: #fff; text-shadow: 0 0 40px var(--glow-color, #fff); margin-bottom: 15px; word-wrap: break-word; font-family: 'Orbitron', sans-serif; }
+        .ending-screen p { color: #ccc; font-size: 1.1rem; margin-bottom: 25px; line-height: 1.7; word-wrap: break-word; }
+        .restart-btn {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 12px 35px;
+            border-radius: 50px;
+            border: 2px solid var(--glow-color, #fff);
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .restart-btn:hover { background: var(--glow-color, #fff); color: #000; box-shadow: 0 0 40px var(--glow-color, #fff); transform: scale(1.06); }
+
+        @media (max-width: 480px) {
+            .circle-btn { width: 110px; height: 110px; }
+            .circle-btn.activated { width: 55px; height: 55px; }
+            .scenario-card { padding: 18px 15px; border-radius: 16px; }
+            .scenario-card .scenario-text { font-size: 1rem; line-height: 1.65; margin-bottom: 15px; }
+            .choice-btn { font-size: 0.95rem; padding: 13px 14px; }
+            .ending-screen h2 { font-size: 1.6rem; }
+        }
+
+        button, .choice-btn, .select-btn, .circle-btn, .back-btn {
+            cursor: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="flash-overlay" id="flashOverlay"></div>
+    <canvas id="particlesCanvas"></canvas>
+    <div class="custom-cursor" id="customCursor"></div>
+
+    <div class="main-container" id="mainContainer">
+        <button class="back-btn" id="backToMenuBtn" style="display:none;">↩️ Menu</button>
+
+        <!-- Scenario Selection Screen -->
+        <div id="scenarioSelector" class="scenario-selector">
+            <h2>THE BUTTON</h2>
+            <button class="select-btn" id="loadDefaultBtn">📦 Default Scenario</button>
+            <button class="select-btn local" id="loadLocalBtn">💾 Local Saved Scenarios</button>
+            <button class="select-btn import" id="loadImportedBtn">📂 Play Imported Story</button>
+            <input type="file" id="importFileInput" accept=".json" style="display:none">
+        </div>
+
+        <!-- Local Scenarios List -->
+        <div id="localListContainer" style="display:none; width:100%; max-width:500px;">
+            <button class="select-btn" id="backToSelectorBtn" style="margin-bottom:15px;">↩️ Back to Home</button>
+            <div id="localList" class="scenario-selector" style="gap:10px;"></div>
+        </div>
+
+        <!-- Game Elements -->
+        <button class="circle-btn" id="circleBtn" style="display:none;">⏣</button>
+        <div class="scenario-card" id="scenarioCard" style="display:none;">
+            <span class="mood-emoji" id="moodEmoji"></span>
+            <div class="level-indicator" id="levelIndicator"></div>
+            <p class="scenario-text" id="scenarioText"></p>
+        </div>
+        <div class="choices-container" id="choicesContainer" style="display:none;"></div>
+        <p class="hint-text" id="hintText" style="display:none;"></p>
+        <div class="ending-screen" id="endingScreen" style="display:none;">
+            <h2 id="endingTitle"></h2>
+            <p id="endingDescription"></p>
+            <button class="restart-btn" id="restartBtn">🔄 Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // ===================== Default Scenario (English) =====================
+        const DEFAULT_SCENARIO = {
+            "levels": [
+                {
+                    "id": "level_1",
+                    "levelName": "Chapter 1 - The Awakening",
+                    "scenario": "You press the button... A strong vibration fills the air. Colors shift before your eyes, and reality melts like a dream. A neon portal opens in front of you. What do you do?",
+                    "mood": "mysterious",
+                    "hint": "Your choice matters...",
+                    "choices": [
+                        { "text": "🚪 Step boldly through the portal", "nextLevelId": "level_2a" },
+                        { "text": "🔍 Hesitate and observe", "nextLevelId": "level_2b" },
+                        { "text": "🙈 Close your eyes and stay put", "nextLevelId": "level_2c" }
+                    ]
+                },
+                {
+                    "id": "level_2a",
+                    "levelName": "Chapter 2 - The Other World",
+                    "scenario": "You step into a stunning neon city! Lights pulse with music, streets stretch like veins of light. A strange creature approaches and says: 'Welcome, traveler... Do you seek knowledge or power?'",
+                    "mood": "bright",
+                    "hint": "Choose wisely...",
+                    "choices": [
+                        { "text": "📚 Seek knowledge", "nextLevelId": "level_3_knowledge" },
+                        { "text": "💪 Seek power", "nextLevelId": "level_3_power" }
+                    ]
+                },
+                {
+                    "id": "level_2b",
+                    "levelName": "Chapter 2 - The Watcher",
+                    "scenario": "You hesitate and notice the portal pulsing with strange energy. Shadows move inside. Suddenly, a whisper from behind: 'Hesitation may be wisdom... or a missed chance.' You turn to find a transparent entity smiling.",
+                    "mood": "ethereal",
+                    "hint": "The voice awaits your reply...",
+                    "choices": [
+                        { "text": "🗣️ 'Who are you? What do you want?'", "nextLevelId": "level_3_question" },
+                        { "text": "🏃 Run back where you came from", "nextLevelId": "level_3_retreat" }
+                    ]
+                },
+                {
+                    "id": "level_2c",
+                    "levelName": "Chapter 2 - Isolation",
+                    "scenario": "You shut your eyes tight. The world spins. When you open them, you're in a dim, silent room. Everything is calm... maybe too calm. Did you escape fate or just delay it?",
+                    "mood": "dark",
+                    "hint": "Silence descends...",
+                    "choices": [
+                        { "text": "🕯️ Explore the room slowly", "nextLevelId": "level_3_explore" },
+                        { "text": "📢 Call out: 'Is anyone here?'", "nextLevelId": "level_3_call" }
+                    ]
+                },
+                {
+                    "id": "level_3_knowledge",
+                    "levelName": "Chapter 3 - Seeker of Knowledge",
+                    "scenario": "The being smiles and hands you a small glowing orb. 'This contains the secrets of the universe... but at a cost. Every answer opens doors to deeper questions. Are you ready to bear the weight of knowledge?'",
+                    "mood": "calm",
+                    "hint": "Knowledge is power... and responsibility",
+                    "choices": [
+                        { "text": "🧠 Accept the orb and open your mind", "nextLevelId": "ending_wisdom" },
+                        { "text": "🙏 Politely refuse: 'I'm not ready yet'", "nextLevelId": "ending_humble" }
+                    ]
+                },
+                {
+                    "id": "level_3_power",
+                    "levelName": "Chapter 3 - Seeker of Power",
+                    "scenario": "It grants you a neon bracelet that wraps around your wrist. Immense energy surges through you! But the bracelet tightens... 'Power requires self-control. Will you master the power... or will it master you?'",
+                    "mood": "intense",
+                    "hint": "Power tempts...",
+                    "choices": [
+                        { "text": "⚡ Control the power and use it wisely", "nextLevelId": "ending_hero" },
+                        { "text": "😈 Unleash the power without restraint", "nextLevelId": "ending_chaos" }
+                    ]
+                },
+                {
+                    "id": "level_3_question",
+                    "levelName": "Chapter 3 - The Dialogue",
+                    "scenario": "The transparent being answers: 'I am the Guardian of the Threshold. I see you are cautious... good. But excessive caution may rob you of the greatest adventure of your life.' It extends a hand towards the portal. 'Come, I'll show you what you fear.'",
+                    "mood": "ethereal",
+                    "hint": "Trust or doubt?",
+                    "choices": [
+                        { "text": "🤝 Trust it and follow", "nextLevelId": "ending_trust" },
+                        { "text": "🤔 Thank it and go alone", "nextLevelId": "ending_alone" }
+                    ]
+                },
+                {
+                    "id": "level_3_retreat",
+                    "levelName": "Chapter 3 - The Escape",
+                    "scenario": "You run back... but the world behind you is no longer the same. Colors are dull, sound is muffled. You feel you've left a part of yourself at that portal. Regret begins to creep into your heart.",
+                    "mood": "dark",
+                    "hint": "Escape has a price...",
+                    "choices": [
+                        { "text": "🔄 Return to the portal before it closes", "nextLevelId": "level_2a" },
+                        { "text": "🚶 Keep walking away and accept the consequences", "nextLevelId": "ending_regret" }
+                    ]
+                },
+                {
+                    "id": "level_3_explore",
+                    "levelName": "Chapter 3 - Exploration",
+                    "scenario": "You touch the walls and they light up with neon inscriptions. This is no ordinary room... it's a testing chamber! Everything you touch reveals a new secret. The room tests your patience and curiosity.",
+                    "mood": "mysterious",
+                    "hint": "Curiosity guides you...",
+                    "choices": [
+                        { "text": "🔎 Keep exploring with passion", "nextLevelId": "ending_discovery" },
+                        { "text": "🧘 Meditate in the center and wait", "nextLevelId": "ending_patience" }
+                    ]
+                },
+                {
+                    "id": "level_3_call",
+                    "levelName": "Chapter 3 - The Call",
+                    "scenario": "Your voice echoes through the space. Suddenly, the walls dissolve and you find yourself in a vast hall filled with neon beings. They all stare at you. You were on a stage the whole time! One steps forward: 'Finally... you spoke.'",
+                    "mood": "bright",
+                    "hint": "Your voice attracts attention...",
+                    "choices": [
+                        { "text": "🎭 Bow respectfully and introduce yourself", "nextLevelId": "ending_respect" },
+                        { "text": "😳 Freeze in surprise", "nextLevelId": "ending_freeze" }
+                    ]
+                },
+                {
+                    "id": "ending_wisdom", "levelName": "🏆 Ending: The Sage", "scenario": "Ending: Path of Wisdom", "mood": "calm", "isEnding": true,
+                    "endingDescription": "You chose knowledge. The orb merges with your mind, and you see the universe with new eyes. You become a wise figure in the neon world, sought by all for guidance. 🌟"
+                },
+                {
+                    "id": "ending_humble", "levelName": "🏆 Ending: The Humble", "scenario": "Ending: Humility", "mood": "hopeful", "isEnding": true,
+                    "endingDescription": "Your refusal out of humility impresses the being. It grants you a portal home with a promise: 'When you are ready, we will find you.' You leave knowing the adventure isn't over. 🌅"
+                },
+                {
+                    "id": "ending_hero", "levelName": "🏆 Ending: The Hero", "scenario": "Ending: Neon Hero", "mood": "energetic", "isEnding": true,
+                    "endingDescription": "You master the power and become a hero in the neon world. You use your strength to protect the weak and spread justice. Your name shines in every corner of the neon city! 🦸‍♂️"
+                },
+                {
+                    "id": "ending_chaos", "levelName": "💀 Ending: Chaos", "scenario": "Ending: Reign of Chaos", "mood": "danger", "isEnding": true,
+                    "endingDescription": "The power controls you. You burn with its light and become a chaotic force. The neon world fears your name... but you lost yourself in the process. Was it worth the power? ⚡💀"
+                },
+                {
+                    "id": "ending_trust", "levelName": "🏆 Ending: Trust", "scenario": "Ending: Bridge of Trust", "mood": "bright", "isEnding": true,
+                    "endingDescription": "You trust the guardian, and it leads you to a world more beautiful than you imagined. You learn that trust can open doors you never knew existed. You become an ambassador between worlds. 🤝✨"
+                },
+                {
+                    "id": "ending_alone", "levelName": "🏆 Ending: The Independent", "scenario": "Ending: The Lonely Path", "mood": "ethereal", "isEnding": true,
+                    "endingDescription": "You go alone and discover that true strength lies in your independence. Your journey becomes a legend, the tale of the traveler who forged his own path in the neon world. 🌌"
+                },
+                {
+                    "id": "ending_regret", "levelName": "💔 Ending: Regret", "scenario": "Ending: Ghost of Regret", "mood": "dark", "isEnding": true,
+                    "endingDescription": "You walk further away... the portal closes forever. You spend the rest of your life wondering: what if you had stepped into the unknown? Regret becomes your constant companion. 🚪💭"
+                },
+                {
+                    "id": "ending_discovery", "levelName": "🏆 Ending: The Explorer", "scenario": "Ending: Spirit of Discovery", "mood": "energetic", "isEnding": true,
+                    "endingDescription": "You uncover all the room's secrets and open a new portal! Your passion for exploration leads you to an endless adventure. You become the explorer of worlds, legendary in every dimension! 🔭🌟"
+                },
+                {
+                    "id": "ending_patience", "levelName": "🏆 Ending: The Patient", "scenario": "Ending: Power of Patience", "mood": "calm", "isEnding": true,
+                    "endingDescription": "You meditate in the center... and everything you seek comes to you willingly. You learn that patience attracts opportunities. The neon world rewards your patience with priceless wisdom. 🧘✨"
+                },
+                {
+                    "id": "ending_respect", "levelName": "🏆 Ending: The Respected", "scenario": "Ending: Mutual Respect", "mood": "bright", "isEnding": true,
+                    "endingDescription": "Your respect earns you powerful allies in the neon world. The beings welcome you as one of their own. You build an empire of kindness and fruitful collaboration. 🤗👑"
+                },
+                {
+                    "id": "ending_freeze", "levelName": "😶 Ending: The Surprise", "scenario": "Ending: Frozen in Surprise", "mood": "mysterious", "isEnding": true,
+                    "endingDescription": "You freeze in surprise... but the beings laugh warmly! 'Don't worry, many do at first.' They give you another chance. The neon world has a sense of humor! 😄🌀"
+                }
+            ]
+        };
+
+        // ===================== Player Engine =====================
+        (function() {
+            // ---------- Elements ----------
+            const circleBtn = document.getElementById('circleBtn');
+            const scenarioCard = document.getElementById('scenarioCard');
+            const scenarioText = document.getElementById('scenarioText');
+            const levelIndicator = document.getElementById('levelIndicator');
+            const moodEmoji = document.getElementById('moodEmoji');
+            const choicesContainer = document.getElementById('choicesContainer');
+            const hintText = document.getElementById('hintText');
+            const flashOverlay = document.getElementById('flashOverlay');
+            const endingScreen = document.getElementById('endingScreen');
+            const endingTitle = document.getElementById('endingTitle');
+            const endingDescription = document.getElementById('endingDescription');
+            const restartBtn = document.getElementById('restartBtn');
+            const particlesCanvas = document.getElementById('particlesCanvas');
+            const ctx = particlesCanvas.getContext('2d');
+            const body = document.body;
+            const scenarioSelector = document.getElementById('scenarioSelector');
+            const backToMenuBtn = document.getElementById('backToMenuBtn');
+            const loadDefaultBtn = document.getElementById('loadDefaultBtn');
+            const loadLocalBtn = document.getElementById('loadLocalBtn');
+            const loadImportedBtn = document.getElementById('loadImportedBtn');
+            const importFileInput = document.getElementById('importFileInput');
+            const localListContainer = document.getElementById('localListContainer');
+            const localListDiv = document.getElementById('localList');
+            const backToSelectorBtn = document.getElementById('backToSelectorBtn');
+
+            // ---------- Game State ----------
+            let gameActive = false;
+            let currentLevelId = null;
+            let levelsData = {};
+            let currentColorScheme = null;
+            let particles = [];
+            let animationId = null;
+            let audioCtx = null;
+            let currentAmbientOscillators = [];
+            let currentAmbientGains = [];
+
+            // ---------- Custom Cursor ----------
+            const cursor = document.getElementById('customCursor');
+            document.addEventListener('mousemove', (e) => { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; });
+            function updateCursorColor() { if (currentColorScheme) { cursor.style.borderColor = currentColorScheme.glowColor; cursor.style.boxShadow = `0 0 10px ${currentColorScheme.glowColor}`; } }
+            function addHoverEffect(selector) {
+                document.querySelectorAll(selector).forEach(el => {
+                    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+                    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+                });
+            }
+            addHoverEffect('button, .select-btn, .circle-btn, .back-btn');
+            const observer = new MutationObserver(() => {
+                document.querySelectorAll('.choice-btn').forEach(btn => {
+                    btn.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+                    btn.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+                });
+            });
+            observer.observe(choicesContainer, { childList: true });
+
+            // ---------- Audio ----------
+            function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+            function stopAmbient() { currentAmbientOscillators.forEach(osc => { try { osc.stop(); } catch (e) {} }); currentAmbientGains.forEach(gain => { try { gain.gain.cancelScheduledValues(0); } catch (e) {} }); currentAmbientOscillators = []; currentAmbientGains = []; }
+            function playRefreshingSound() {
+                initAudio(); const now = audioCtx.currentTime; const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+                notes.forEach((freq, i) => { const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now + i * 0.06); gain.gain.setValueAtTime(0, now + i * 0.06); gain.gain.linearRampToValueAtTime(0.25, now + i * 0.06 + 0.03); gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.35); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now + i * 0.06); osc.stop(now + i * 0.06 + 0.4); });
+                const sparkOsc = audioCtx.createOscillator(); const sparkGain = audioCtx.createGain(); sparkOsc.type = 'triangle'; sparkOsc.frequency.setValueAtTime(2000, now); sparkOsc.frequency.exponentialRampToValueAtTime(8000, now + 0.25); sparkGain.gain.setValueAtTime(0.12, now); sparkGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); sparkOsc.connect(sparkGain); sparkGain.connect(audioCtx.destination); sparkOsc.start(now); sparkOsc.stop(now + 0.35);
+            }
+            function playTransitionSound() { if (!audioCtx) return; const now = audioCtx.currentTime; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2); osc.frequency.exponentialRampToValueAtTime(300, now + 0.45); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.55); }
+            function playAmbientForMood(mood) {
+                stopAmbient(); if (!audioCtx) return; const now = audioCtx.currentTime;
+                const moodConfigs = {
+                    'mysterious': { freqs: [110, 138.59, 165], type: 'sine', vol: 0.06, lfoRate: 0.4 },
+                    'intense': { freqs: [220, 277, 330], type: 'sawtooth', vol: 0.04, lfoRate: 2.5 },
+                    'calm': { freqs: [196, 246.94, 293.66], type: 'sine', vol: 0.07, lfoRate: 0.25 },
+                    'energetic': { freqs: [329.63, 392, 493.88], type: 'triangle', vol: 0.05, lfoRate: 3 },
+                    'dark': { freqs: [65.41, 82.41, 98], type: 'sine', vol: 0.08, lfoRate: 0.3 },
+                    'bright': { freqs: [261.63, 329.63, 392], type: 'sine', vol: 0.06, lfoRate: 0.6 },
+                    'ethereal': { freqs: [174.61, 220, 261.63], type: 'triangle', vol: 0.07, lfoRate: 0.35 },
+                    'hopeful': { freqs: [293.66, 369.99, 440], type: 'sine', vol: 0.06, lfoRate: 0.5 },
+                    'danger': { freqs: [146.83, 185, 220], type: 'sawtooth', vol: 0.04, lfoRate: 3.5 },
+                    'haunting': { freqs: [80, 120, 160], type: 'sine', vol: 0.09, lfoRate: 0.2 },
+                    'nostalgic': { freqs: [261.63, 329.63, 392], type: 'triangle', vol: 0.06, lfoRate: 0.7 },
+                    'chaotic': { freqs: [440, 554.37, 659.25], type: 'sawtooth', vol: 0.05, lfoRate: 5 },
+                    'serene': { freqs: [174.61, 261.63, 349.23], type: 'sine', vol: 0.05, lfoRate: 0.15 },
+                    'glitched': { freqs: [200, 300, 450, 600], type: 'square', vol: 0.04, lfoRate: 10 }
+                };
+                const config = moodConfigs[mood] || moodConfigs['calm'];
+                config.freqs.forEach(freq => { const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); const lfo = audioCtx.createOscillator(); const lfoGain = audioCtx.createGain(); osc.type = config.type; osc.frequency.setValueAtTime(freq, now); lfo.type = 'sine'; lfo.frequency.setValueAtTime(config.lfoRate, now); lfoGain.gain.setValueAtTime(config.vol * 0.5, now); lfo.connect(lfoGain); lfoGain.connect(gain.gain); gain.gain.setValueAtTime(config.vol, now); gain.gain.setValueAtTime(config.vol * 0.3, now + 0.8); gain.gain.linearRampToValueAtTime(config.vol, now + 1.6); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); lfo.start(now); currentAmbientOscillators.push(osc, lfo); currentAmbientGains.push(gain, lfoGain); });
+            }
+            function playChoiceSound() { if (!audioCtx) return; const now = audioCtx.currentTime; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(900, now + 0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.3); }
+
+            // ---------- Particles ----------
+            function resizeCanvas() { particlesCanvas.width = window.innerWidth; particlesCanvas.height = window.innerHeight; }
+            window.addEventListener('resize', resizeCanvas); resizeCanvas();
+            function createParticle(color) { return { x: Math.random() * particlesCanvas.width, y: particlesCanvas.height + Math.random() * 60, radius: Math.random() * 3.5 + 1, speedY: -(Math.random() * 1.8 + 0.4), speedX: (Math.random() - 0.5) * 1.2, opacity: Math.random() * 0.7 + 0.3, color: color, life: Math.random() * 300 + 200, maxLife: 500 }; }
+            function spawnParticlesForScheme(scheme) { const colors = scheme.particleColors || ['#ffffff']; for (let i = 0; i < 45; i++) particles.push(createParticle(colors[Math.floor(Math.random() * colors.length)])); }
+            function updateParticles() { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.y += p.speedY; p.x += p.speedX; p.life--; if (p.life <= 0 || p.y < -30 || p.x < -30 || p.x > particlesCanvas.width + 30) particles.splice(i, 1); } if (gameActive && particles.length < 70 && currentColorScheme) { const colors = currentColorScheme.particleColors || ['#ffffff']; particles.push(createParticle(colors[Math.floor(Math.random() * colors.length)])); } }
+            function drawParticles() { ctx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height); particles.forEach(p => { const alpha = p.opacity * (p.life / p.maxLife); ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); if (p.color.startsWith('#')) { const r = parseInt(p.color.slice(1,3),16); const g = parseInt(p.color.slice(3,5),16); const b = parseInt(p.color.slice(5,7),16); ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`; } else ctx.fillStyle = p.color; ctx.fill(); }); }
+            function animateParticles() { updateParticles(); drawParticles(); animationId = requestAnimationFrame(animateParticles); }
+
+            // ---------- Color Schemes (14 moods) ----------
+            const colorSchemes = {
+                'mysterious': { bg: 'linear-gradient(135deg, #0a0015 0%, #1a0030 30%, #0d0d2b 60%, #050510 100%)', glowColor: '#b347ea', glowColor2: '#7b2fff', cardBorder: 'rgba(179,71,234,0.5)', choiceBorder: 'rgba(179,71,234,0.45)', choiceBg: 'rgba(25,10,40,0.75)', choiceHoverBg: 'rgba(50,20,70,0.85)', btnNeonBg: '#0d0020', particleColors: ['#b347ea','#9b59ff','#d4a0ff','#7b2fff','#e8d5ff'], emoji: '🔮' },
+                'intense': { bg: 'linear-gradient(135deg, #1a0000 0%, #330011 30%, #1a0010 60%, #0a0005 100%)', glowColor: '#ff1744', glowColor2: '#ff6a00', cardBorder: 'rgba(255,23,68,0.55)', choiceBorder: 'rgba(255,106,0,0.5)', choiceBg: 'rgba(30,5,10,0.75)', choiceHoverBg: 'rgba(50,10,20,0.85)', btnNeonBg: '#1a0005', particleColors: ['#ff1744','#ff6a00','#ff5252','#ff8a00','#ff4444'], emoji: '🔥' },
+                'calm': { bg: 'linear-gradient(135deg, #001a1a 0%, #002a30 30%, #0a1a25 60%, #050f15 100%)', glowColor: '#00f0ff', glowColor2: '#00b8d4', cardBorder: 'rgba(0,240,255,0.5)', choiceBorder: 'rgba(0,184,212,0.45)', choiceBg: 'rgba(5,25,30,0.75)', choiceHoverBg: 'rgba(10,40,50,0.85)', btnNeonBg: '#001a20', particleColors: ['#00f0ff','#00b8d4','#80f0ff','#00e5ff','#b3f5ff'], emoji: '🌊' },
+                'energetic': { bg: 'linear-gradient(135deg, #1a1a00 0%, #2a2a00 30%, #1a2000 60%, #0f1500 100%)', glowColor: '#ffe600', glowColor2: '#00ff41', cardBorder: 'rgba(255,230,0,0.55)', choiceBorder: 'rgba(0,255,65,0.5)', choiceBg: 'rgba(20,25,5,0.75)', choiceHoverBg: 'rgba(35,40,10,0.85)', btnNeonBg: '#151800', particleColors: ['#ffe600','#00ff41','#ffff00','#66ff66','#ccff00'], emoji: '⚡' },
+                'dark': { bg: 'linear-gradient(135deg, #000005 0%, #05050f 30%, #020208 60%, #000000 100%)', glowColor: '#880000', glowColor2: '#440000', cardBorder: 'rgba(136,0,0,0.4)', choiceBorder: 'rgba(100,0,0,0.4)', choiceBg: 'rgba(10,5,5,0.8)', choiceHoverBg: 'rgba(25,10,10,0.85)', btnNeonBg: '#050000', particleColors: ['#880000','#660000','#aa2222','#440000'], emoji: '🌑' },
+                'bright': { bg: 'linear-gradient(135deg, #0a0a20 0%, #151535 30%, #0a1530 60%, #050a20 100%)', glowColor: '#ffffff', glowColor2: '#ffcc00', cardBorder: 'rgba(255,255,255,0.5)', choiceBorder: 'rgba(255,200,0,0.5)', choiceBg: 'rgba(20,20,40,0.7)', choiceHoverBg: 'rgba(40,40,70,0.8)', btnNeonBg: '#101025', particleColors: ['#ffffff','#ffcc00','#ffe8a0','#ffffcc','#ffd700'], emoji: '✨' },
+                'ethereal': { bg: 'linear-gradient(135deg, #150a20 0%, #201535 30%, #1a1025 60%, #0a0515 100%)', glowColor: '#ff69b4', glowColor2: '#da70d6', cardBorder: 'rgba(255,105,180,0.5)', choiceBorder: 'rgba(218,112,214,0.45)', choiceBg: 'rgba(25,15,35,0.75)', choiceHoverBg: 'rgba(40,25,55,0.85)', btnNeonBg: '#150a20', particleColors: ['#ff69b4','#da70d6','#ffb6c1','#d8b4ff','#ffa0d0'], emoji: '🌸' },
+                'hopeful': { bg: 'linear-gradient(135deg, #001a10 0%, #002a20 30%, #0a2018 60%, #05100c 100%)', glowColor: '#00ff88', glowColor2: '#00cc66', cardBorder: 'rgba(0,255,136,0.5)', choiceBorder: 'rgba(0,204,102,0.45)', choiceBg: 'rgba(5,25,18,0.75)', choiceHoverBg: 'rgba(10,40,28,0.85)', btnNeonBg: '#001a10', particleColors: ['#00ff88','#00cc66','#80ffbb','#00e676'], emoji: '🌱' },
+                'danger': { bg: 'linear-gradient(135deg, #200000 0%, #350000 30%, #1a0005 60%, #0f0000 100%)', glowColor: '#ff3333', glowColor2: '#ff0000', cardBorder: 'rgba(255,51,51,0.6)', choiceBorder: 'rgba(255,0,0,0.5)', choiceBg: 'rgba(30,5,5,0.8)', choiceHoverBg: 'rgba(50,10,10,0.85)', btnNeonBg: '#1a0000', particleColors: ['#ff3333','#ff0000','#ff6666','#cc0000'], emoji: '⚠️' },
+                'haunting': { bg: 'linear-gradient(135deg, #0a0a15 0%, #12122a 30%, #1a1a2e 60%, #0d0d20 100%)', glowColor: '#6b8fa3', glowColor2: '#2c4a5a', cardBorder: 'rgba(107,143,163,0.5)', choiceBorder: 'rgba(44,74,90,0.45)', choiceBg: 'rgba(10,15,25,0.8)', choiceHoverBg: 'rgba(20,30,45,0.85)', btnNeonBg: '#0a0a15', particleColors: ['#6b8fa3','#4a6d82','#8fadc1','#2c4a5a','#a3c2d1'], emoji: '👻' },
+                'nostalgic': { bg: 'linear-gradient(135deg, #2a1a0a 0%, #3a2a10 30%, #2a1a15 60%, #1a0a05 100%)', glowColor: '#ffb347', glowColor2: '#ff8c00', cardBorder: 'rgba(255,179,71,0.5)', choiceBorder: 'rgba(255,140,0,0.45)', choiceBg: 'rgba(30,20,10,0.75)', choiceHoverBg: 'rgba(50,35,15,0.85)', btnNeonBg: '#1a1008', particleColors: ['#ffb347','#ff8c00','#ffcc80','#e67e22','#f39c12'], emoji: '📻' },
+                'chaotic': { bg: 'linear-gradient(135deg, #200020 0%, #301030 30%, #102010 60%, #051005 100%)', glowColor: '#ff00ff', glowColor2: '#00ffff', cardBorder: 'rgba(255,0,255,0.5)', choiceBorder: 'rgba(0,255,255,0.45)', choiceBg: 'rgba(20,10,20,0.75)', choiceHoverBg: 'rgba(40,20,40,0.85)', btnNeonBg: '#150515', particleColors: ['#ff00ff','#00ffff','#ff80ff','#80ffff','#ff0080'], emoji: '🌀' },
+                'serene': { bg: 'linear-gradient(135deg, #0a1520 0%, #102530 30%, #0a1a25 60%, #050f15 100%)', glowColor: '#87ceeb', glowColor2: '#4682b4', cardBorder: 'rgba(135,206,235,0.5)', choiceBorder: 'rgba(70,130,180,0.45)', choiceBg: 'rgba(10,20,30,0.75)', choiceHoverBg: 'rgba(15,30,45,0.85)', btnNeonBg: '#0a1018', particleColors: ['#87ceeb','#4682b4','#b0e0e6','#5f9ea0','#add8e6'], emoji: '🕊️' },
+                'glitched': { bg: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 30%, #0a0a0a 60%, #050505 100%)', glowColor: '#00ff00', glowColor2: '#ff0000', cardBorder: 'rgba(0,255,0,0.5)', choiceBorder: 'rgba(255,0,0,0.45)', choiceBg: 'rgba(10,10,10,0.8)', choiceHoverBg: 'rgba(20,20,20,0.85)', btnNeonBg: '#0a0a0a', particleColors: ['#00ff00','#ff0000','#00ff80','#ff0040','#00ffff'], emoji: '💾' }
+            };
+
+            function applyColorScheme(schemeName) {
+                const scheme = colorSchemes[schemeName] || colorSchemes['calm'];
+                currentColorScheme = scheme;
+                const root = document.documentElement;
+                root.style.setProperty('--glow-color', scheme.glowColor);
+                root.style.setProperty('--glow-color-2', scheme.glowColor2);
+                root.style.setProperty('--card-border', scheme.cardBorder);
+                root.style.setProperty('--choice-border', scheme.choiceBorder);
+                root.style.setProperty('--choice-bg', scheme.choiceBg);
+                root.style.setProperty('--choice-hover-bg', scheme.choiceHoverBg);
+                root.style.setProperty('--btn-neon-bg', scheme.btnNeonBg);
+                body.style.background = scheme.bg;
+                circleBtn.style.boxShadow = `0 0 40px ${scheme.glowColor}, 0 0 80px ${scheme.glowColor}, 0 0 120px ${scheme.glowColor2}`;
+                circleBtn.style.borderColor = scheme.glowColor;
+                circleBtn.style.background = scheme.btnNeonBg;
+                scenarioCard.style.borderColor = scheme.cardBorder;
+                scenarioCard.style.boxShadow = `0 20px 60px rgba(0,0,0,0.5), 0 0 30px ${scheme.glowColor}, 0 0 0 1px rgba(255,255,255,0.05) inset`;
+                updateCursorColor();
+            }
+
+            // ---------- Display Level ----------
+            function displayLevel(levelId, animate = true) {
+                const level = levelsData[levelId];
+                if (!level) return;
+                currentLevelId = levelId;
+                if (animate && gameActive) {
+                    scenarioCard.classList.remove('visible'); choicesContainer.classList.remove('visible'); hintText.classList.remove('visible'); endingScreen.classList.remove('visible');
+                    playTransitionSound(); flashOverlay.classList.add('active'); setTimeout(() => flashOverlay.classList.remove('active'), 200);
+                }
+                const delay = animate && gameActive ? 350 : 150;
+                setTimeout(() => {
+                    const mood = level.mood || 'calm'; applyColorScheme(mood); if (gameActive) playAmbientForMood(mood);
+                    const scheme = colorSchemes[mood] || colorSchemes['calm']; moodEmoji.textContent = scheme.emoji;
+                    if (level.isEnding) {
+                        scenarioCard.classList.remove('visible'); choicesContainer.classList.remove('visible'); hintText.classList.remove('visible');
+                        endingScreen.classList.add('visible'); endingTitle.textContent = level.scenario; endingDescription.textContent = level.endingDescription || '';
+                        circleBtn.classList.add('activated'); stopAmbient();
+                        if (audioCtx) { const now = audioCtx.currentTime; [523, 659, 784, 1047].forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0, now + i * 0.2); g.gain.linearRampToValueAtTime(0.2, now + i * 0.2 + 0.1); g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.2 + 0.8); o.connect(g); g.connect(audioCtx.destination); o.start(now + i * 0.2); o.stop(now + i * 0.2 + 0.9); }); }
+                        return;
+                    }
+                    endingScreen.classList.remove('visible'); scenarioText.textContent = level.scenario; levelIndicator.textContent = level.levelName || `Level ${levelId}`;
+                    choicesContainer.innerHTML = '';
+                    if (level.choices && level.choices.length > 0) {
+                        level.choices.forEach((choice, index) => { const btn = document.createElement('button'); btn.className = 'choice-btn'; btn.textContent = choice.text; btn.addEventListener('click', () => { playChoiceSound(); makeChoice(choice.nextLevelId); }); btn.style.transitionDelay = `${index * 0.08}s`; choicesContainer.appendChild(btn); });
+                    }
+                    scenarioCard.classList.add('visible'); choicesContainer.classList.add('visible'); hintText.classList.add('visible'); hintText.textContent = level.hint || 'Choose your reaction...';
+                    circleBtn.classList.add('activated');
+                }, delay);
+            }
+
+            function makeChoice(nextLevelId) {
+                if (!levelsData[nextLevelId]) return;
+                
+                // Portal animation
+                circleBtn.classList.add('portal-animation');
+                setTimeout(() => { circleBtn.classList.remove('portal-animation'); }, 1200);
+                
+                flashOverlay.classList.add('active');
+                setTimeout(() => flashOverlay.classList.remove('active'), 180);
+                setTimeout(() => { displayLevel(nextLevelId, true); }, 300);
+            }
+
+            function startGame(startLevelId = 'level_1') {
+                if (gameActive) return;
+                gameActive = true; initAudio(); playRefreshingSound(); particlesCanvas.classList.add('active'); if (!animationId) animateParticles();
+                
+                // Portal animation for start
+                circleBtn.classList.add('portal-animation');
+                setTimeout(() => {
+                    circleBtn.classList.remove('portal-animation');
+                    circleBtn.classList.add('activated');
+                    const initialScheme = colorSchemes['mysterious']; applyColorScheme('mysterious');
+                    hintText.classList.add('visible'); hintText.textContent = 'Choose your reaction...'; playAmbientForMood('mysterious'); spawnParticlesForScheme(initialScheme);
+                    setTimeout(() => { displayLevel(startLevelId, false); }, 600);
+                    circleBtn.textContent = ''; circleBtn.style.fontSize = '0';
+                    scenarioSelector.style.display = 'none'; localListContainer.style.display = 'none'; backToMenuBtn.style.display = 'block';
+                }, 800);
+            }
+
+            function loadScenario(scenarioObject, startLevel = 'level_1') {
+                levelsData = {};
+                if (Array.isArray(scenarioObject.levels)) { scenarioObject.levels.forEach(l => levelsData[l.id] = l); }
+                else if (typeof scenarioObject === 'object') { levelsData = scenarioObject; }
+                scenarioSelector.style.display = 'none'; localListContainer.style.display = 'none'; circleBtn.style.display = 'block'; scenarioCard.style.display = 'block'; choicesContainer.style.display = 'flex'; hintText.style.display = 'block'; endingScreen.style.display = 'block';
+                backToMenuBtn.style.display = 'block'; startGame(startLevel);
+            }
+
+            function goToMenu() { window.location.href = './index.html'; }
+
+            // ---------- Events ----------
+            circleBtn.addEventListener('click', () => { if (gameActive && currentLevelId && levelsData[currentLevelId] && !levelsData[currentLevelId].isEnding) { playRefreshingSound(); flashOverlay.classList.add('active'); setTimeout(() => flashOverlay.classList.remove('active'), 200); displayLevel(currentLevelId, true); } });
+            restartBtn.addEventListener('click', () => { const firstLevel = Object.keys(levelsData)[0] || 'level_1'; gameActive = false; currentLevelId = null; currentColorScheme = null; particles = []; stopAmbient(); scenarioCard.classList.remove('visible'); choicesContainer.classList.remove('visible'); hintText.classList.remove('visible'); endingScreen.classList.remove('visible'); particlesCanvas.classList.remove('active'); circleBtn.classList.remove('activated'); circleBtn.textContent = '⏣'; circleBtn.style.fontSize = ''; body.style.background = '#ffffff'; scenarioSelector.style.display = 'none'; localListContainer.style.display = 'none'; backToMenuBtn.style.display = 'block'; startGame(firstLevel); });
+
+            loadDefaultBtn.addEventListener('click', () => { loadScenario(DEFAULT_SCENARIO); });
+
+            // --- Local Scenarios List ---
+            loadLocalBtn.addEventListener('click', showLocalScenarios);
+            function showLocalScenarios() {
+                const scenarios = JSON.parse(localStorage.getItem('neon_scenarios') || '[]');
+                if (scenarios.length === 0) {
+                    alert('No saved scenarios found. Go to the editor to create one.');
+                    return;
+                }
+                localListDiv.innerHTML = scenarios.map(s => `
+                    <button class="select-btn" style="margin:4px 0; border-color:#ff00ff; color:#ff00ff;" 
+                            onclick="loadSelectedLocal('${s.name.replace(/'/g, "\\'")}')">
+                        ${s.name}
+                    </button>
+                `).join('');
+                scenarioSelector.style.display = 'none';
+                localListContainer.style.display = 'block';
+            }
+            window.loadSelectedLocal = function(name) {
+                const scenarios = JSON.parse(localStorage.getItem('neon_scenarios') || '[]');
+                const found = scenarios.find(s => s.name === name);
+                if (found) {
+                    loadScenario(found.data);
+                } else {
+                    alert('Error: scenario not found.');
+                }
+            };
+            backToSelectorBtn.addEventListener('click', () => {
+                window.location.href = './index.html';
+            });
+
+            loadImportedBtn.addEventListener('click', () => importFileInput.click());
+            importFileInput.addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); localStorage.setItem('imported_scenario', JSON.stringify(data)); loadScenario(data); } catch (err) { alert('Invalid JSON file.'); } }; reader.readAsText(file); });
+
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('mode') === 'imported') {
+                const imported = localStorage.getItem('imported_scenario');
+                if (imported) { try { loadScenario(JSON.parse(imported)); } catch (e) { alert('Imported data is corrupt.'); } }
+            } else if (params.get('mode') === 'local') {
+                showLocalScenarios();
+            }
+
+            backToMenuBtn.addEventListener('click', goToMenu);
+        })();
+    </script>
+</body>
+</html>
